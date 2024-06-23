@@ -10,6 +10,8 @@ import {
 } from "./ui/select";
 import { Button } from "./ui/button";
 
+const storiesPath = 'public/stories'
+
 const StoryWriter = () => {
   const [story, setStory] = useState("");
   const [pages, setPages] = useState<number>();
@@ -18,6 +20,31 @@ const StoryWriter = () => {
   
   const [runStarted, setRunStarted] = useState<boolean>(false);
   const [runFinished, setRunFinished] = useState<boolean | null>(null);
+
+  const [currentTool, setCurrentTool] = useState("");
+
+
+  const runScript = async() => {
+    setRunStarted(true)
+    setRunFinished(false)
+
+    const response = await fetch('/api/run-script', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({story, pages, path: storiesPath})
+    })
+
+    if(response.ok && response.body) {
+      // api call was successful
+      console.log("Streaming started")
+    } else {
+      setRunFinished(true)
+      setRunStarted(false)
+      console.error("Failed to start streaming! 😿")
+    }
+  }
 
   return (
     <div className="flex flex-col container">
@@ -43,7 +70,7 @@ const StoryWriter = () => {
           </SelectContent>
         </Select>
 
-        <Button disabled={!story || !pages}>Generate Story 🚀</Button>
+        <Button disabled={!story || !pages || runStarted} onClick={runScript}>Generate Story 🚀</Button>
       </section>
 
 
@@ -58,6 +85,17 @@ const StoryWriter = () => {
               <span className="mr-5">{">>"}</span>
               {progress}
             </div>
+
+            {currentTool && (<div className="py-10">
+              <span className="mr-5">{"----- [Current Tool] -----"}</span>
+            </div>)}
+
+            {runStarted && (
+              <div>
+                <span className="mr-5 animate-in">{"----- [AI StoryTeller has started] -----"}</span>
+                <br />
+              </div>
+            )}
         </div>
       </section>
     </div>
