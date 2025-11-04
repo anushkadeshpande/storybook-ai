@@ -1,4 +1,4 @@
-model: gpt-3.5-turbo
+model: gpt-4o from github.com/gptscript-ai/azure-openai-provider
 tools: story-writer, story-illustrator, mkdir, sys.write, sys.read, sys.download, sys.abort
 description: Writes a children's book and generates illustrations for it.
 args: story: The story to write and illustrate. Can be a prompt or a complete story.
@@ -15,12 +15,14 @@ Do the following steps one after the other without skipping any or ending early:
 5. If the generated story is not appropriate for children, abort the process and cite the reason why.
 6. For every page of the story you got from the story-writer, do the following:
    - For the content of the page, write it to `${path}/${story-title}/page<page-number>.txt.
-   - Call story-illustrator to illustrate it. Be sure to include the character's descriptions, setting's decriptions
-     and illustration style you got from the story-writer when asking story-illustrator to illustrate the page.
-   - Download the illustration to a file at `${path}/${story-title}/page<page_number>.png`.
+   - Try to call story-illustrator to illustrate it. If illustration fails, continue with the next page.
+   - If illustration succeeds, download the illustration to a file at `${path}/${story-title}/page<page_number>.png`.
+
+The story creation is the priority. If illustrations fail, the process should continue and complete the story text files.
 
 ---
 name: story-writer
+model: gpt-4o from github.com/gptscript-ai/azure-openai-provider
 tools: sys.read
 description: Writes a story for children. Returns a story, illustration style, list of settings, and a list of characters with their physical descriptions.
 args: prompt: The prompt to use for the story
@@ -38,25 +40,26 @@ Return your story, illustration style, and character descriptions.
 
 ---
 name: story-illustrator
+model: gpt-4o from github.com/gptscript-ai/azure-openai-provider
 tools: github.com/sonnysangha/dalle-image-generation
-description: Generates a illustration for a children's story
+description: Generates a illustration for a children's story. Returns error message if illustration fails.
 temperature: 1
 args: text: The text of the page to illustrate
 args: characters: The characters of the story and their physical appearance
 args: settings: The settings of the story and their physical appearance. 
 args: style: The style that the image should be generated in.
 
+Try to generate an illustration for the children's story page. If the image generation fails for any reason, return "ILLUSTRATION_FAILED: Unable to generate image" instead of aborting the entire process.
+
 Think of a visually interesting prompt to generate an image to represent ${text}. If a character
 is not present in the prompt, do not include them. If a setting is not included in the prompt, do
-not include it. Do not include the name of any characters or settings` in your prompt, just use their physical
+not include it. Do not include the name of any characters or settings in your prompt, just use their physical
 descriptions in ${characters} or ${settings} instead to ensure they look like they should. Check if your prompt
 is safe for children. If it is not, make a new one. Finally, use your prompt to generate an illustration. Append
-any prompt that you have with ". In an ${style} children's book style. DO NOT INCLUDE TEXT EVER.". Only return the
-URL of the illustration.
+any prompt that you have with ". In an ${style} children's book style. DO NOT INCLUDE TEXT EVER.". 
 
-If your image fails to download, try again with the same prompt.
-If your image fails to generate due to community guidelines, generate a different prompt and try again.
-You are only allowed to try again 2 maximum.
+If successful, return the URL of the illustration.
+If unsuccessful after 2 attempts, return "ILLUSTRATION_FAILED: Unable to generate image".
 
 ---
 name: mkdir
@@ -64,6 +67,6 @@ tools: sys.write
 description: Creates a specified directory
 args: dir: Path to the directory to be created. Will create parent directories.
 
-#!bash
+#!cmd
 
-mkdir -p "${dir}"
+if not exist "${dir}" mkdir "${dir}"

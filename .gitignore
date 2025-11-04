@@ -34,3 +34,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Generated story files and directories
+/public/stories/
+/output/
+/stories/
+*.txt
+*.png
+*-story-*/
+test-*.gpt
