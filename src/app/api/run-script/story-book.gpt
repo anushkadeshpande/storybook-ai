@@ -1,3 +1,4 @@
+model: gpt-3.5-turbo
 tools: story-writer, story-illustrator, mkdir, sys.write, sys.read, sys.download, sys.abort
 description: Writes a children's book and generates illustrations for it.
 args: story: The story to write and illustrate. Can be a prompt or a complete story.
@@ -20,6 +21,7 @@ Do the following steps one after the other without skipping any or ending early:
 
 ---
 name: story-writer
+tools: sys.read
 description: Writes a story for children. Returns a story, illustration style, list of settings, and a list of characters with their physical descriptions.
 args: prompt: The prompt to use for the story
 args: pages: The number of pages that the story should have.

@@ -1,17 +1,17 @@
 import { NextRequest } from "next/server";
 import { RunEventType, RunOpts } from "@gptscript-ai/gptscript"
-import gptScript from "@/lib/gptScriptInstance";
+import g from "@/lib/gptScriptInstance";
+import path from "path";
 
-const script = 'app/api/run-script/story-book.gpt'
+const script = path.join(process.cwd(), "src/app/api/run-script/story-book.gpt")
 
 export async function POST(request: NextRequest) {
   const {story, pages, path} = await request.json()
-
+  
+  // gptscript command format
+  // gptscript ./story-book.gpt --story {story} --pages {pages} --path {path}
   const opts: RunOpts = {
     disableCache: true,
-
-    // gptscript command format
-    // gptscript ./story-book.gpt --story {story} --pages {pages} --path {path}
     input: `--story ${story} --pages ${pages} --path ${path}`
   }
 
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          const run = await gptScript.run(script, opts)
+          const run = await g.run(script, opts)
 
           run.on(RunEventType.Event, (data) => controller.enqueue(encoder.encode(`event: ${JSON.stringify(data)}\n\n`)))
 
